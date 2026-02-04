@@ -19,22 +19,20 @@ if not API_KEY:
 
 app = FastAPI(title="Agentic Honeypot API")
 @app.middleware("http")
-async def log_raw_request(request, call_next):
-    body = await request.body()
-    print(f"RAW BODY: {body.decode('utf-8')}")
-    
-    request._body = body  # so FastAPI can still read it
-    return await call_next(request)
+async def log_requests(request, call_next):
+    print("INCOMING:", request.method, request.url)
+    response = await call_next(request)
+    return response
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    # Get the raw body to see what GUVI actually sent
+    
     body = await request.body()
     
     print("\n--- DEBUG: INCOMING FAILURE ---")
     print(f"URL: {request.url}")
     print(f"Body received: {body.decode('utf-8')}")
     print("Validation Errors:")
-    # Print each specific error (e.g., 'missing field: sessionId')
+    
     print(json.dumps(exc.errors(), indent=2))
     print("-------------------------------\n")
     
