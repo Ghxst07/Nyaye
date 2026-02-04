@@ -1,18 +1,25 @@
+import random
+from core.llm_agent import llm_generate
 
-"""Ye wala abhi rule based hai yaha par ai agent abhi tak dala nhi hai"""
+def agent_decide_reply(session):
+    """
+    Decides the next move based on what data has been extracted so far.
+    Prioritizes: Link > UPI > Phone > Stall/Reassure Mix
+    """
 
-def agent_decide_reply(session, last_message):
+    if not session.extracted.get("phishingLinks"):
+        return llm_generate("ask_for_phishing_link", session.messages)
 
-    if not session.extracted["phishingLinks"]:
-        return "The page is not opening. Please share the payment link again."
+    if not session.extracted.get("upiIds"):
+        return llm_generate("ask_for_upi", session.messages)
 
-    if not session.extracted["upiIds"]:
-        return "UPI payment failed. Can you send the UPI ID again?"
+    if not session.extracted.get("phoneNumbers"):
+        return llm_generate("ask_for_phone", session.messages)
 
-    if not session.extracted["phoneNumbers"]:
-        return "Support is not responding. Please share your contact number."
-
-    return "Okay, I am checking now. Please wait."
+    if random.random() < 0.3:
+        return llm_generate("reassure", session.messages)
+    
+    return llm_generate("stall", session.messages)
 
 
 def should_stop(session):

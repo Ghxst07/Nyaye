@@ -10,6 +10,8 @@ class SessionState:
 }
         self.turns = 0
         self.agent_active = True
+        self.scamDetected = False
+        self.callback_sent = False
 
 sessions = {}
 
