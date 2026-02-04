@@ -20,6 +20,9 @@ def handle_message(session_id, message_text):
     "sender": "scammer",
     "text": message_text
 })
+    if not session.scamDetected and detect_scam_intent(message_text): #atul bhai aur kshitiz bhai ke liye <3
+        session.scamDetected = True
+
 
     extracted = extract_all(message_text)
     update_intelligence(session, extracted)
@@ -31,9 +34,15 @@ def handle_message(session_id, message_text):
     "text": reply
 })
     print("SESSION STATE:", session.extracted)
-
+    
     stop_flag = should_stop(session)
-    if stop_flag:
+
+    if (
+        stop_flag
+        and session.scamDetected
+        and not session.callback_sent
+    ):
         send_guvi_callback(session)
+
 
     return reply, stop_flag
