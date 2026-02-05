@@ -5,11 +5,12 @@ def extract_upi(text):
     return re.findall(pattern, text)
 
 def extract_phone(text):
-    pattern = r"(?:\+91)?[6-9]\d{9}"
+    pattern = r"(?<!\d)(?:\+91[-\s]?)?[6-9]\d{9}(?!\d)"
     return re.findall(pattern, text)
 
 def extract_links(text):
-    pattern = r"https?://[^\s]+"
+    pattern =r"(https?://[^\s]+|www\.[^\s]+|\b[a-zA-Z0-9-]+\.(com|in|net|org|co\.in)\b)"
+
     return re.findall(pattern, text)
 
 def extract_bank(text):
