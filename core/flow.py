@@ -1,6 +1,7 @@
 from core.extractor import extract_all
 from core.sessions import get_session
 from core.agent import agent_decide_reply, should_stop
+from core.scam_intent import detect_scam_intent
 from tools.callback import send_guvi_callback
 
 
