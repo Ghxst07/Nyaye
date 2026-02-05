@@ -9,8 +9,7 @@ def extract_phone(text):
     return re.findall(pattern, text)
 
 def extract_links(text):
-    pattern =r"(https?://[^\s]+|www\.[^\s]+|\b[a-zA-Z0-9-]+\.(com|in|net|org|co\.in)\b)"
-
+    pattern = r"(https?://[^\s]+|www\.[^\s]+|\b[a-zA-Z0-9-]+\.(?:com|in|net|org|co\.in)\b)"
     return re.findall(pattern, text)
 
 def extract_bank(text):
@@ -23,14 +22,25 @@ def extract_keywords(text):
     for k in SCAM_KEYWORDS:
         if k in text.lower():
             found.append(k)
-    return found
+    return list(set(found)) 
 
 def extract_all(text):
-        return {
-        "upiIds": extract_upi(text),
-        "phoneNumbers": extract_phone(text),
-        "phishingLinks": extract_links(text),
-        "bankAccounts": extract_bank(text),
-        "suspiciousKeywords": extract_keywords(text)
-    }
+    
+    phones = extract_phone(text)
+    raw_banks = extract_bank(text)
+    
+    phone_digits_set = set(re.sub(r"\D", "", p)[-10:] for p in phones)
 
+
+    clean_banks = []
+    for bank in raw_banks:
+        if bank not in phone_digits_set and len(bank) != 10:
+            clean_banks.append(bank)
+
+    return {
+        "upiIds": extract_upi(text),
+        "phoneNumbers": phones,
+        "phishingLinks": extract_links(text),
+        "bankAccounts": clean_banks, 
+        "suspiciousKeywords": extract_keywords(text)
+}
