@@ -29,7 +29,7 @@ def handle_message(session_id, message_text):
     update_intelligence(session, extracted)
 
 
-    reply = agent_decide_reply(session, message_text)
+    reply = agent_decide_reply(session)
     session.messages.append({
     "sender": "agent",
     "text": reply
