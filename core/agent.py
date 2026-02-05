@@ -52,26 +52,31 @@ def agent_decide_reply(session):
     scammer_intent = analyze_scammer_intent(last_scammer_msg)
     extracted = session.extracted
     
-    if scammer_intent["providing_upi"] and len(extracted.get("upiIds", [])) > 0:
+    has_upi = len(extracted.get("upiIds", [])) > 0
+    has_link = len(extracted.get("phishingLinks", [])) > 0
+    has_phone = len(extracted.get("phoneNumbers", [])) > 0
+    has_bank = len(extracted.get("bankAccounts", [])) > 0
+    
+    if scammer_intent["providing_upi"] and has_upi:
         if session.turns % 3 == 0:
             return llm_generate("ask_for_phone", session.messages)
         return llm_generate("upi_not_working", session.messages)
     
-    if scammer_intent["providing_link"] and len(extracted.get("phishingLinks", [])) > 0:
-        if session.turns > 5 and random.random() < 0.4:
+    if scammer_intent["providing_link"] and has_link:
+        if session.turns > 5 and random.random() < 0.5:
             return llm_generate("ask_for_phone", session.messages)
         return llm_generate("link_not_working", session.messages)
     
-    if scammer_intent["providing_phone"] and len(extracted.get("phoneNumbers", [])) > 0:
-        if session.turns > 3 and random.random() < 0.3:
+    if scammer_intent["providing_phone"] and has_phone:
+        if session.turns > 3 and random.random() < 0.4:
             return llm_generate("ask_for_phishing_link", session.messages)
         return llm_generate("phone_not_reachable", session.messages)
     
-    if scammer_intent["asking_to_click_link"] and len(extracted.get("phishingLinks", [])) > 0:
+    if scammer_intent["asking_to_click_link"] and has_link:
         return llm_generate("link_not_working", session.messages)
     
     if scammer_intent["asking_confirmation"]:
-        if random.random() < 0.6:
+        if random.random() < 0.7:
             return llm_generate("stall", session.messages)
         return llm_generate("reassure", session.messages)
     
@@ -79,30 +84,44 @@ def agent_decide_reply(session):
         return llm_generate("reassure", session.messages)
     
     if scammer_intent["asking_for_info"]:
-        if random.random() < 0.5:
+        if random.random() < 0.6:
             return llm_generate("ask_for_phone", session.messages)
         return llm_generate("stall", session.messages)
     
-    has_upi = len(extracted.get("upiIds", [])) > 0
-    has_link = len(extracted.get("phishingLinks", [])) > 0
-    has_phone = len(extracted.get("phoneNumbers", [])) > 0
-    
-    if not has_link and random.random() < 0.5:
+    if scammer_intent["requesting_action"] and not has_link:
         return llm_generate("ask_for_phishing_link", session.messages)
-    elif not has_upi and random.random() < 0.5:
-        if has_link:
-            return llm_generate("link_not_working", session.messages)
-        return llm_generate("stall", session.messages)
-    elif not has_phone and random.random() < 0.6:
-        return llm_generate("ask_for_phone", session.messages)
+    
+    needed_info = []
+    if not has_link:
+        needed_info.append("link")
+    if not has_upi:
+        needed_info.append("upi")
+    if not has_phone:
+        needed_info.append("phone")
+    if not has_bank:
+        needed_info.append("bank")
+    
+    if len(needed_info) > 0:
+        if session.turns % 2 == 1:
+            if "link" in needed_info and random.random() < 0.7:
+                return llm_generate("ask_for_phishing_link", session.messages)
+            elif "upi" in needed_info and random.random() < 0.7:
+                return llm_generate("ask_for_upi", session.messages)
+            elif "phone" in needed_info and random.random() < 0.6:
+                return llm_generate("ask_for_phone", session.messages)
     
     if session.turns > 0 and session.turns % 4 == 0:
         return llm_generate("reassure", session.messages)
     
-    if random.random() < 0.4:
-        return llm_generate("stall", session.messages)
+    if random.random() < 0.5:
+        if not has_link:
+            return llm_generate("ask_for_phishing_link", session.messages)
+        elif not has_upi:
+            return llm_generate("ask_for_upi", session.messages)
+        else:
+            return llm_generate("stall", session.messages)
     
-    return llm_generate("ask_for_phishing_link", session.messages)
+    return llm_generate("stall", session.messages)
 
 
 def should_stop(session):
